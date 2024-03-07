@@ -7,15 +7,14 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
-	"github.com/bitly/go-simplejson"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/bytedance/sonic"
 
 	"github.com/adshao/go-binance/v2/common"
 	"github.com/adshao/go-binance/v2/delivery"
@@ -112,7 +111,7 @@ var (
 var UseTestnet = false
 
 // Redefining the standard package
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = sonic.ConfigDefault
 
 // Global enums
 const (
@@ -248,14 +247,6 @@ func currentTimestamp() int64 {
 // FormatTimestamp formats a time into Unix timestamp in milliseconds, as requested by Binance.
 func FormatTimestamp(t time.Time) int64 {
 	return t.UnixNano() / int64(time.Millisecond)
-}
-
-func newJSON(data []byte) (j *simplejson.Json, err error) {
-	j, err = simplejson.NewJson(data)
-	if err != nil {
-		return nil, err
-	}
-	return j, nil
 }
 
 // getAPIEndpoint return the base endpoint of the Rest API according the UseTestnet flag
@@ -416,7 +407,7 @@ func (c *Client) callAPI(ctx context.Context, r *request, opts ...RequestOption)
 	if err != nil {
 		return []byte{}, err
 	}
-	data, err = ioutil.ReadAll(res.Body)
+	data, err = io.ReadAll(res.Body)
 	if err != nil {
 		return []byte{}, err
 	}

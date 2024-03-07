@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+
+	"github.com/bytedance/sonic"
+	"github.com/bytedance/sonic/ast"
 )
 
 // AmountToLotSize converts an amount to a lot sized amount
@@ -41,4 +44,8 @@ func ToInt64(digit interface{}) (i int64, err error) {
 		return int64(floatVal), nil
 	}
 	return 0, fmt.Errorf("unexpected digit: %v", digit)
+}
+
+func GetJSON(data []byte) (j ast.Node, err error) {
+	return sonic.Get(data)
 }

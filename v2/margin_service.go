@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"strings"
+
+	"github.com/adshao/go-binance/v2/common"
 )
 
 // MarginTransferService transfer between spot account and margin account
@@ -859,12 +861,11 @@ func (s *StartIsolatedMarginUserStreamService) Do(ctx context.Context, opts ...R
 	if err != nil {
 		return "", err
 	}
-	j, err := newJSON(data)
+	j, err := common.GetJSON(data)
 	if err != nil {
 		return "", err
 	}
-	listenKey = j.Get("listenKey").MustString()
-	return listenKey, nil
+	return j.Get("listenKey").String()
 }
 
 // KeepaliveIsolatedMarginUserStreamService updates listen key for isolated margin user data stream
@@ -952,12 +953,11 @@ func (s *StartMarginUserStreamService) Do(ctx context.Context, opts ...RequestOp
 	if err != nil {
 		return "", err
 	}
-	j, err := newJSON(data)
+	j, err := common.GetJSON(data)
 	if err != nil {
 		return "", err
 	}
-	listenKey = j.Get("listenKey").MustString()
-	return listenKey, nil
+	return j.Get("listenKey").String()
 }
 
 // KeepaliveMarginUserStreamService update listen key

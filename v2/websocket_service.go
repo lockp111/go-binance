@@ -1,10 +1,13 @@
 package binance
 
 import (
-	stdjson "encoding/json"
 	"fmt"
 	"strings"
 	"time"
+
+	stdjson "encoding/json"
+
+	"github.com/adshao/go-binance/v2/common"
 )
 
 var (
@@ -63,30 +66,36 @@ func WsPartialDepthServe100Ms(symbol string, levels string, handler WsPartialDep
 func wsPartialDepthServe(endpoint string, symbol string, handler WsPartialDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 		event := new(WsPartialDepthEvent)
 		event.Symbol = symbol
-		event.LastUpdateID = j.Get("lastUpdateId").MustInt64()
-		bidsLen := len(j.Get("bids").MustArray())
+		event.LastUpdateID, _ = j.Get("lastUpdateId").Int64()
+		bidsArr, _ := j.Get("bids").Array()
+		bidsLen := len(bidsArr)
 		event.Bids = make([]Bid, bidsLen)
 		for i := 0; i < bidsLen; i++ {
-			item := j.Get("bids").GetIndex(i)
+			item := j.Get("bids").Index(i)
+			price, _ := item.Index(0).String()
+			quantity, _ := item.Index(1).String()
 			event.Bids[i] = Bid{
-				Price:    item.GetIndex(0).MustString(),
-				Quantity: item.GetIndex(1).MustString(),
+				Price:    price,
+				Quantity: quantity,
 			}
 		}
-		asksLen := len(j.Get("asks").MustArray())
+		asksArr, _ := j.Get("asks").Array()
+		asksLen := len(asksArr)
 		event.Asks = make([]Ask, asksLen)
 		for i := 0; i < asksLen; i++ {
-			item := j.Get("asks").GetIndex(i)
+			item := j.Get("asks").Index(i)
+			price, _ := item.Index(0).String()
+			quantity, _ := item.Index(1).String()
 			event.Asks[i] = Ask{
-				Price:    item.GetIndex(0).MustString(),
-				Quantity: item.GetIndex(1).MustString(),
+				Price:    price,
+				Quantity: quantity,
 			}
 		}
 		handler(event)
@@ -103,16 +112,16 @@ func WsCombinedPartialDepthServe(symbolLevels map[string]string, handler WsParti
 	endpoint = endpoint[:len(endpoint)-1]
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 		event := new(WsPartialDepthEvent)
-		stream := j.Get("stream").MustString()
+		stream, _ := j.Get("stream").String()
 		symbol := strings.Split(stream, "@")[0]
 		event.Symbol = strings.ToUpper(symbol)
-		data := j.Get("data").MustMap()
+		data, _ := j.Get("data").MapUseNumber()
 		event.LastUpdateID, _ = data["lastUpdateId"].(stdjson.Number).Int64()
 		bidsLen := len(data["bids"].([]interface{}))
 		event.Bids = make([]Bid, bidsLen)
@@ -157,33 +166,39 @@ func WsDepthServe100Ms(symbol string, handler WsDepthHandler, errHandler ErrHand
 func wsDepthServe(endpoint string, handler WsDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 		event := new(WsDepthEvent)
-		event.Event = j.Get("e").MustString()
-		event.Time = j.Get("E").MustInt64()
-		event.Symbol = j.Get("s").MustString()
-		event.LastUpdateID = j.Get("u").MustInt64()
-		event.FirstUpdateID = j.Get("U").MustInt64()
-		bidsLen := len(j.Get("b").MustArray())
+		event.Event, _ = j.Get("e").String()
+		event.Time, _ = j.Get("E").Int64()
+		event.Symbol, _ = j.Get("s").String()
+		event.LastUpdateID, _ = j.Get("u").Int64()
+		event.FirstUpdateID, _ = j.Get("U").Int64()
+		bidsArr, _ := j.Get("b").Array()
+		bidsLen := len(bidsArr)
 		event.Bids = make([]Bid, bidsLen)
 		for i := 0; i < bidsLen; i++ {
-			item := j.Get("b").GetIndex(i)
+			item := j.Get("b").Index(i)
+			price, _ := item.Index(0).String()
+			quantity, _ := item.Index(1).String()
 			event.Bids[i] = Bid{
-				Price:    item.GetIndex(0).MustString(),
-				Quantity: item.GetIndex(1).MustString(),
+				Price:    price,
+				Quantity: quantity,
 			}
 		}
-		asksLen := len(j.Get("a").MustArray())
+		asksArr, _ := j.Get("a").Array()
+		asksLen := len(asksArr)
 		event.Asks = make([]Ask, asksLen)
 		for i := 0; i < asksLen; i++ {
-			item := j.Get("a").GetIndex(i)
+			item := j.Get("a").Index(i)
+			price, _ := item.Index(0).String()
+			quantity, _ := item.Index(1).String()
 			event.Asks[i] = Ask{
-				Price:    item.GetIndex(0).MustString(),
-				Quantity: item.GetIndex(1).MustString(),
+				Price:    price,
+				Quantity: quantity,
 			}
 		}
 		handler(event)
@@ -224,16 +239,16 @@ func WsCombinedDepthServe100Ms(symbols []string, handler WsDepthHandler, errHand
 func wsCombinedDepthServe(endpoint string, handler WsDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 		event := new(WsDepthEvent)
-		stream := j.Get("stream").MustString()
+		stream, _ := j.Get("stream").String()
 		symbol := strings.Split(stream, "@")[0]
 		event.Symbol = strings.ToUpper(symbol)
-		data := j.Get("data").MustMap()
+		data, _ := j.Get("data").MapUseNumber()
 		event.Time, _ = data["E"].(stdjson.Number).Int64()
 		event.LastUpdateID, _ = data["u"].(stdjson.Number).Int64()
 		event.FirstUpdateID, _ = data["U"].(stdjson.Number).Int64()
@@ -273,14 +288,14 @@ func WsCombinedKlineServe(symbolIntervalPair map[string]string, handler WsKlineH
 	endpoint = endpoint[:len(endpoint)-1]
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 
-		stream := j.Get("stream").MustString()
-		data := j.Get("data").MustMap()
+		stream, _ := j.Get("stream").String()
+		data, _ := j.Get("data").Map()
 
 		symbol := strings.Split(stream, "@")[0]
 
@@ -371,14 +386,14 @@ func WsCombinedAggTradeServe(symbols []string, handler WsAggTradeHandler, errHan
 	endpoint = endpoint[:len(endpoint)-1]
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 
-		stream := j.Get("stream").MustString()
-		data := j.Get("data").MustMap()
+		stream, _ := j.Get("stream").String()
+		data, _ := j.Get("data").Map()
 
 		symbol := strings.Split(stream, "@")[0]
 
@@ -566,7 +581,7 @@ func WsUserDataServe(listenKey string, handler WsUserDataHandler, errHandler Err
 	endpoint := fmt.Sprintf("%s/%s", getWsEndpoint(), listenKey)
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
@@ -579,8 +594,7 @@ func WsUserDataServe(listenKey string, handler WsUserDataHandler, errHandler Err
 			errHandler(err)
 			return
 		}
-
-		switch UserDataEventType(j.Get("e").MustString()) {
+		switch event.Event {
 		case UserDataEventTypeOutboundAccountPosition:
 			err = json.Unmarshal(message, &event.AccountUpdate)
 			if err != nil {
@@ -600,11 +614,11 @@ func WsUserDataServe(listenKey string, handler WsUserDataHandler, errHandler Err
 				return
 			}
 			// Unmarshal has case sensitive problem
-			event.TransactionTime = j.Get("T").MustInt64()
-			event.OrderUpdate.TransactionTime = j.Get("T").MustInt64()
-			event.OrderUpdate.Id = j.Get("i").MustInt64()
-			event.OrderUpdate.TradeId = j.Get("t").MustInt64()
-			event.OrderUpdate.FeeAsset = j.Get("N").MustString()
+			event.TransactionTime, _ = j.Get("T").Int64()
+			event.OrderUpdate.TransactionTime, _ = j.Get("T").Int64()
+			event.OrderUpdate.Id, _ = j.Get("i").Int64()
+			event.OrderUpdate.TradeId, _ = j.Get("t").Int64()
+			event.OrderUpdate.FeeAsset, _ = j.Get("N").String()
 		case UserDataEventTypeListStatus:
 			err = json.Unmarshal(message, &event.OCOUpdate)
 			if err != nil {
@@ -631,14 +645,14 @@ func WsCombinedMarketStatServe(symbols []string, handler WsMarketStatHandler, er
 	cfg := newWsConfig(endpoint)
 
 	wsHandler := func(message []byte) {
-		j, err := newJSON(message)
+		j, err := common.GetJSON(message)
 		if err != nil {
 			errHandler(err)
 			return
 		}
 
-		stream := j.Get("stream").MustString()
-		data := j.Get("data").MustMap()
+		stream, _ := j.Get("stream").String()
+		data, _ := j.Get("data").Map()
 
 		symbol := strings.Split(stream, "@")[0]
 

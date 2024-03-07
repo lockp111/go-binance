@@ -3,6 +3,8 @@ package binance
 import (
 	"context"
 	"net/http"
+
+	"github.com/adshao/go-binance/v2/common"
 )
 
 // StartUserStreamService create listen key for user stream service
@@ -21,12 +23,11 @@ func (s *StartUserStreamService) Do(ctx context.Context, opts ...RequestOption) 
 	if err != nil {
 		return "", err
 	}
-	j, err := newJSON(data)
+	j, err := common.GetJSON(data)
 	if err != nil {
 		return "", err
 	}
-	listenKey = j.Get("listenKey").MustString()
-	return listenKey, nil
+	return j.Get("listenKey").String()
 }
 
 // KeepaliveUserStreamService update listen key

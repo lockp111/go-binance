@@ -3,6 +3,8 @@ package binance
 import (
 	"context"
 	"net/http"
+
+	"github.com/adshao/go-binance/v2/common"
 )
 
 // PingService ping server
@@ -35,12 +37,16 @@ func (s *ServerTimeService) Do(ctx context.Context, opts ...RequestOption) (serv
 	if err != nil {
 		return 0, err
 	}
-	j, err := newJSON(data)
+	j, err := common.GetJSON(data)
 	if err != nil {
 		return 0, err
 	}
-	serverTime = j.Get("serverTime").MustInt64()
-	return serverTime, nil
+
+	ts, err := j.Get("serverTime").Int64()
+	if err == nil {
+		return ts, nil
+	}
+	return j.Int64()
 }
 
 // SetServerTimeService set server time

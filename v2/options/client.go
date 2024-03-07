@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/common"
-	"github.com/bitly/go-simplejson"
 )
 
 // SideType define side type of order
@@ -186,14 +185,6 @@ const (
 
 func currentTimestamp() int64 {
 	return int64(time.Nanosecond) * time.Now().UnixNano() / int64(time.Millisecond)
-}
-
-func newJSON(data []byte) (j *simplejson.Json, err error) {
-	j, err = simplejson.NewJson(data)
-	if err != nil {
-		return nil, err
-	}
-	return j, nil
 }
 
 // getApiEndpoint return the base endpoint of the WS

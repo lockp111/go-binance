@@ -40,28 +40,34 @@ func (s *DepthService) Do(ctx context.Context, opts ...RequestOption) (res *Dept
 	if err != nil {
 		return nil, err
 	}
-	j, err := newJSON(data)
+	j, err := common.GetJSON(data)
 	if err != nil {
 		return nil, err
 	}
 	res = new(DepthResponse)
-	res.LastUpdateID = j.Get("lastUpdateId").MustInt64()
-	bidsLen := len(j.Get("bids").MustArray())
+	res.LastUpdateID, _ = j.Get("lastUpdateId").Int64()
+	bidsArr, _ := j.Get("bids").Array()
+	bidsLen := len(bidsArr)
 	res.Bids = make([]Bid, bidsLen)
 	for i := 0; i < bidsLen; i++ {
-		item := j.Get("bids").GetIndex(i)
+		item := j.Get("bids").Index(i)
+		price, _ := item.Index(0).String()
+		quantity, _ := item.Index(1).String()
 		res.Bids[i] = Bid{
-			Price:    item.GetIndex(0).MustString(),
-			Quantity: item.GetIndex(1).MustString(),
+			Price:    price,
+			Quantity: quantity,
 		}
 	}
-	asksLen := len(j.Get("asks").MustArray())
+	asksArr, _ := j.Get("asks").Array()
+	asksLen := len(asksArr)
 	res.Asks = make([]Ask, asksLen)
 	for i := 0; i < asksLen; i++ {
-		item := j.Get("asks").GetIndex(i)
+		item := j.Get("asks").Index(i)
+		price, _ := item.Index(0).String()
+		quantity, _ := item.Index(1).String()
 		res.Asks[i] = Ask{
-			Price:    item.GetIndex(0).MustString(),
-			Quantity: item.GetIndex(1).MustString(),
+			Price:    price,
+			Quantity: quantity,
 		}
 	}
 	return res, nil

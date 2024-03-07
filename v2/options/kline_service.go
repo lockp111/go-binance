@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/adshao/go-binance/v2/common"
 )
 
 // KlinesService list klines
@@ -67,32 +69,34 @@ func (s *KlinesService) Do(ctx context.Context, opts ...RequestOption) (res []*K
 	if err != nil {
 		return []*Kline{}, err
 	}
-	j, err := newJSON(data)
+	j, err := common.GetJSON(data)
 	if err != nil {
 		return []*Kline{}, err
 	}
-	num := len(j.MustArray())
+	arr, _ := j.Array()
+	num := len(arr)
 	res = make([]*Kline, num)
 	for i := 0; i < num; i++ {
-		item := j.GetIndex(i)
-		if len(item.MustMap()) < 12 {
+		item := j.Index(i)
+		m, _ := item.Map()
+		if len(m) < 12 {
 			err = fmt.Errorf("invalid kline response")
 			return []*Kline{}, err
 		}
-		res[i] = &Kline{
-			OpenTime:    item.Get("openTime").MustInt64(),
-			Open:        item.Get("open").MustString(),
-			High:        item.Get("high").MustString(),
-			Low:         item.Get("low").MustString(),
-			Close:       item.Get("close").MustString(),
-			CloseTime:   item.Get("closeTime").MustInt64(),
-			Amount:      item.Get("amount").MustString(),
-			TakerAmount: item.Get("takerAmount").MustString(),
-			Volume:      item.Get("volume").MustString(),
-			TakerVolume: item.Get("takerVolume").MustString(),
-			Interval:    item.Get("interval").MustString(),
-			TradeCount:  item.Get("tradeCount").MustInt64(),
-		}
+		kline := &Kline{}
+		kline.OpenTime, _ = item.Get("openTime").Int64()
+		kline.Open, _ = item.Get("open").String()
+		kline.High, _ = item.Get("high").String()
+		kline.Low, _ = item.Get("low").String()
+		kline.Close, _ = item.Get("close").String()
+		kline.CloseTime, _ = item.Get("closeTime").Int64()
+		kline.Amount, _ = item.Get("amount").String()
+		kline.TakerAmount, _ = item.Get("takerAmount").String()
+		kline.Volume, _ = item.Get("volume").String()
+		kline.TakerVolume, _ = item.Get("takerVolume").String()
+		kline.Interval, _ = item.Get("interval").String()
+		kline.TradeCount, _ = item.Get("tradeCount").Int64()
+		res[i] = kline
 	}
 	return res, nil
 }
